@@ -1,4 +1,10 @@
-import { Form, Link, useSearchParams } from 'react-router-dom';
+import {
+  Form,
+  Link,
+  useSearchParams,
+  useActionData,
+  useNavigation,
+} from 'react-router-dom';
 
 import classes from './AuthForm.module.css';
 
@@ -15,12 +21,29 @@ function AuthForm() {
   */
   const [searchParams] = useSearchParams();
   const isLogin = searchParams.get('mode') === 'login';
-  console.log(searchParams);
+
+  /*
+  Authentication에서 반환하는 데이터를 담고 있음.
+  만약 422, 401 오류에 해당하는 response 객체가 반환되면 해당 내용을 UI로 출력해줘야 함.
+  */
+  const data = useActionData();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
 
   return (
     <>
       <Form method="post" className={classes.form}>
         <h1>{isLogin ? 'Log in' : 'Create a new user'}</h1>
+
+        {/* data가 422, 401 에러 객체를 반환했을 경우 유효성 검사 UI 출력 */}
+        {data && data.errors && (
+          <ul>
+            {Object.values(data.errors).map((err) => (
+              <li key={err}>{err}</li>
+            ))}
+          </ul>
+        )}
+        {data && data.message && <p>{data.message}</p>}
         <p>
           <label htmlFor="email">Email</label>
           <input id="email" type="email" name="email" required />
@@ -36,7 +59,9 @@ function AuthForm() {
           <Link to={`?mode=${isLogin ? 'signup' : 'login'}`}>
             {isLogin ? 'Create new user' : 'Login'}
           </Link>
-          <button>Save</button>
+          <button disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Save'}
+          </button>
         </div>
       </Form>
     </>
