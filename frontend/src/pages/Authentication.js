@@ -46,6 +46,27 @@ export async function action({ request }) {
     throw json({ message: 'Could not authenticate user.' }, { status: 500 });
   }
 
-  // tbd: token 관리.
+  // backend/routes/auth.js에서 token을 반환함. 즉, response에 token이 포함되어 있음.
+  const resData = await response.json();
+  const token = resData.token;
+
+  // token은 로컬 스토리지, 세션 스토리지, 쿠키, 메모리 등에 저장될 수 있음.
+  // 'token' = key
+  localStorage.setItem('token', token);
+
+  /* 
+  백엔드에서 토큰의 만료시간은 1시간으로 설정하고 Root.js에서 setTimer로 1시간 뒤에 로그아웃 하도록 설정함.
+  그러나, 사용자가 로그인 하고 10분 뒤에 페이지를 새로고침하면 다시 useEffect에 의해 타이머가 1시간으로 리셋됨.
+  즉, backend에서 정한 1시간과 차이가 발생함.
+  따라서 만료 날짜를 계산해야 한다.
+  */
+  const expiration = new Date();
+
+  // backend에서 토큰 만료 시간을 1시간으로 설정함.
+  expiration.setHours(expiration.getHours() + 1);
+
+  // 해당 만료 날짜를 표준화된 스트링으로 변환함.
+  localStorage.setItem('expiration', expiration.toISOString());
+
   return redirect('/'); // 로그인 성공 - Home으로 이동.
 }
